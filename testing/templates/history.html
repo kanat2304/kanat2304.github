@@ -1,0 +1,73 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Тарих</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <script>
+        function copyLink(id) {
+            var link = window.location.origin + "/test/" + id + "/";
+            navigator.clipboard.writeText(link).then(() => alert("Ссылка скопирована!"));
+        }
+        function confirmDelete(url) {
+            if(confirm("Вы уверены, что хотите удалить этот тест? Все результаты учеников тоже исчезнут!")) {
+                window.location.href = url;
+            }
+        }
+    </script>
+</head>
+<body>
+    <div class="page-container">
+        <h2 style="text-align: center;">📜 Управление</h2>
+
+        <div class="card">
+            <h3 style="color: #00d2ff; margin-bottom: 15px;">🔗 Мои тесты</h3>
+            <div class="table-scroll">
+                <table>
+                    {% for test in my_tests %}
+                    <tr>
+                        <td>
+                            <div style="font-weight: bold;">{{ test.title }}</div>
+                            <div style="font-size: 11px; color: #aaa;">{{ test.date_created|date:"d.m.Y" }}</div>
+                        </td>
+                        <td style="text-align: right; white-space: nowrap;">
+                            <button onclick="copyLink({{ test.id }})" class="btn-copy" style="margin-right: 5px;">🔗</button>
+                            
+                            <button onclick="confirmDelete('{% url 'delete_test' test.id %}')" 
+                                    style="background: #e74c3c; color: white; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer;">
+                                🗑️
+                            </button>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td>Тестов пока нет...</td></tr>
+                    {% endfor %}
+                </table>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3 style="color: #38ef7d; margin-bottom: 15px;">🎓 Результаты</h3>
+            <div class="table-scroll">
+                <table>
+                    <tr><th>Ученик</th><th>Балл</th></tr>
+                    {% for result in results %}
+                    <tr>
+                        <td>{{ result.student_name }}<br><small style="color: #aaa;">{{ result.test.title }}</small></td>
+                        <td>
+                            <b style="color: {% if result.score > result.total_questions|add:'-2' %}#38ef7d{% else %}#ff4757{% endif %};">
+                                {{ result.score }}/{{ result.total_questions }}
+                            </b>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td>Результатов нет...</td></tr>
+                    {% endfor %}
+                </table>
+            </div>
+        </div>
+    </div>
+
+    {% include 'base_nav.html' %}
+</body>
+</html>

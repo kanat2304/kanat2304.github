@@ -1,0 +1,106 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ test.title }}</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <script>
+        // --- 1. ТАЙМЕР ---
+        let timeLeft = {{ test.time_limit }} * 60;
+        function updateTimer() {
+            let m = Math.floor(timeLeft / 60);
+            let s = timeLeft % 60;
+            if(s<10) s="0"+s; if(m<10) m="0"+m;
+            document.getElementById("timer").innerText = m+":"+s;
+            if(timeLeft <= 0) document.getElementById("examForm").submit();
+            else { timeLeft--; setTimeout(updateTimer, 1000); }
+        }
+
+        // --- 2. АНТИ-ШПАРГАЛКА ---
+        document.addEventListener("visibilitychange", function() {
+            if (document.hidden) {
+                document.getElementById('cheat-overlay').style.display = 'flex';
+            }
+        });
+
+        function closeWarning() {
+            document.getElementById('cheat-overlay').style.display = 'none';
+        }
+
+        window.onload = updateTimer;
+    </script>
+    <style>
+        /* Ескерту экраны */
+        #cheat-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(220, 53, 69, 0.95); color: white; display: none;
+            flex-direction: column; align-items: center; justify-content: center; z-index: 9999;
+            text-align: center;
+        }
+        /* Радио батырмаларға арналған стиль (Mobile Style) */
+        .option-label {
+            display: block; 
+            padding: 12px; 
+            background: rgba(255,255,255,0.05); 
+            margin: 8px 0; 
+            border-radius: 10px; 
+            cursor: pointer; 
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: 0.2s;
+        }
+        .option-label:hover {
+            background: rgba(255,255,255,0.15);
+            border-color: #00d2ff;
+        }
+        input[type="radio"] {
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="cheat-overlay">
+        <h1 style="font-size: 60px;">⚠️</h1>
+        <h1>НАЗАР АУДАРЫҢЫЗ!</h1>
+        <p>Тесттен шығуға тыйым салынған!</p>
+        <button onclick="closeWarning()" style="padding: 10px 20px; font-weight: bold; border-radius: 10px; border: none; cursor: pointer;">Түсіндім</button>
+    </div>
+
+    <div class="page-container" style="max-width: 600px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2 style="margin: 0;">📝 {{ test.title }}</h2>
+            <div style="background: linear-gradient(45deg, #ff416c, #ff4b2b); color: white; padding: 8px 15px; border-radius: 20px; font-weight: bold; box-shadow: 0 4px 10px rgba(255, 65, 108, 0.3);">
+                ⏱️ <span id="timer">00:00</span>
+            </div>
+        </div>
+        
+        <form method="post" id="examForm">
+            {% csrf_token %}
+            
+            <input type="text" name="student_name" required placeholder="Аты-жөніңізді жазыңыз..." 
+                   style="margin-bottom: 20px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 15px; border-radius: 10px; width: 100%;">
+
+            {% for question in questions %}
+            <div class="card" style="text-align: left; padding: 20px;">
+                <h4 style="margin-top: 0; color: #00d2ff;">Сұрақ {{ forloop.counter }}</h4>
+                <p style="font-size: 16px; margin-bottom: 15px;">{{ question.text }}</p>
+                
+                <label class="option-label">
+                    <input type="radio" name="question_{{ question.id }}" value="1"> {{ question.option1 }}
+                </label>
+                <label class="option-label">
+                    <input type="radio" name="question_{{ question.id }}" value="2"> {{ question.option2 }}
+                </label>
+                <label class="option-label">
+                    <input type="radio" name="question_{{ question.id }}" value="3"> {{ question.option3 }}
+                </label>
+                <label class="option-label">
+                    <input type="radio" name="question_{{ question.id }}" value="4"> {{ question.option4 }}
+                </label>
+            </div>
+            {% endfor %}
+
+            <button type="submit" class="btn-submit">Аяқтау және Жіберу ✅</button>
+        </form>
+    </div>
+</body>
+</html>

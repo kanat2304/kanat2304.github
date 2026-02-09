@@ -1,0 +1,32 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Вход</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+    <div class="background">
+        <div class="shape"></div>
+        <div class="shape"></div>
+    </div>
+
+    <div class="auth-box">
+        <h2>Вход в систему</h2>
+        
+        <form method="post">
+            {% csrf_token %}
+            
+            <label for="username">Логин</label>
+            <input type="text" name="username" placeholder="Ваш логин" id="username" required autocomplete="off">
+            
+            <label for="password">Пароль</label>
+            <input type="password" name="password" placeholder="Ваш пароль" id="password" required>
+            
+            <button type="submit">Войти</button>
+        </form>
+
+        <p>Нет аккаунта? <a href="{% url 'register' %}">Регистрация</a></p>
+    </div>
+</body>
+</html>

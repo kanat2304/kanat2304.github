@@ -1,0 +1,59 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Басты бет</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="page-container">
+        <h2 style="text-align: center; margin-bottom: 20px;">📊 Статистика</h2>
+        
+        <div style="display: flex; gap: 15px; margin-bottom: 20px;">
+            <div class="card" style="flex: 1; padding: 15px;">
+                <h1 style="font-size: 40px; margin: 0; color: #00d2ff;">{{ total_tests }}</h1>
+                <p style="font-size: 12px;">Тестов</p>
+            </div>
+            <div class="card" style="flex: 1; padding: 15px;">
+                <h1 style="font-size: 40px; margin: 0; color: #38ef7d;">{{ total_students }}</h1>
+                <p style="font-size: 12px;">Учеников</p>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>📈 Активность учеников</h3>
+            <canvas id="myChart" height="200"></canvas>
+        </div>
+        
+    </div>
+
+    {% include 'base_nav.html' %}
+
+    <script>
+        const ctx = document.getElementById('myChart').getContext('2d');
+        const myChart = new Chart(ctx, {
+            type: 'bar', // Тип графика: 'bar' (столбики) или 'line' (линия)
+            data: {
+                labels: {{ chart_labels|safe }}, // Названия тестов из Python
+                datasets: [{
+                    label: 'Кол-во сдавших',
+                    data: {{ chart_data|safe }}, // Цифры из Python
+                    backgroundColor: 'rgba(0, 210, 255, 0.5)',
+                    borderColor: 'rgba(0, 210, 255, 1)',
+                    borderWidth: 1,
+                    borderRadius: 5
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.1)' } },
+                    x: { grid: { display: false } }
+                },
+                plugins: { legend: { display: false } }
+            }
+        });
+    </script>
+</body>
+</html>

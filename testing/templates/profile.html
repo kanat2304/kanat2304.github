@@ -1,0 +1,27 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Профиль</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+    <div class="page-container" style="text-align: center; padding-top: 50px;">
+        <div class="card">
+            <div style="font-size: 80px; margin-bottom: 10px;">👨‍🏫</div>
+            <h2>{{ user.username }}</h2>
+            <p style="color: #00d2ff;">Мұғалім</p>
+            
+            <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.1); margin: 20px 0;">
+            
+            <p style="font-size: 14px; color: #aaa; margin-bottom: 30px;">Smart School жүйесіне қош келдіңіз.</p>
+            
+            <a href="{% url 'user_logout' %}" style="display: block; width: 100%; padding: 15px; background: #ff4757; color: white; text-decoration: none; border-radius: 10px; font-weight: bold; box-shadow: 0 5px 15px rgba(255, 71, 87, 0.4);">
+                Шығу 🚪
+            </a>
+        </div>
+    </div>
+
+    {% include 'base_nav.html' %}
+</body>
+</html>

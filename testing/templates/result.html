@@ -1,0 +1,16 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Нәтиже</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+    <div class="test-container" style="text-align: center;">
+        <h1>Тест аяқталды!</h1>
+        <h2>{{ student }}, сіздің нәтижеңіз:</h2>
+        <h1 style="color: #007bff; font-size: 48px;">{{ score }} / {{ total }}</h1>
+        <a href="/" class="btn-submit" style="text-decoration: none; display: inline-block; width: auto;">Шығу</a>
+    </div>
+</body>
+</html>

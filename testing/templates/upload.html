@@ -1,0 +1,43 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Жаңа тест</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+    <div class="page-container">
+        <h2 style="text-align: center;">🤖 AI Тест генератор</h2>
+        
+        <div class="card">
+            {% if error %}
+            <div style="background: #ff4757; color: white; padding: 10px; border-radius: 10px; margin-bottom: 15px;">{{ error }}</div>
+            {% endif %}
+
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <label>Тақырып:</label>
+                <input type="text" name="title" placeholder="Мысалы: Қазақстан тарихы" required>
+                
+                <div style="display: flex; gap: 10px;">
+                    <div style="width: 50%;">
+                        <label>Сұрақ саны:</label>
+                        <input type="number" name="question_count" value="5" min="1" max="20">
+                    </div>
+                    <div style="width: 50%;">
+                        <label>Уақыт (мин):</label>
+                        <input type="number" name="time_limit" value="20" min="5" max="180">
+                    </div>
+                </div>
+                
+                <label style="margin-top: 15px; display: block;">Файл жүктеу (Word/PDF):</label>
+                <input type="file" name="document" accept=".pdf, .docx" required style="padding: 10px; background: rgba(255,255,255,0.05);">
+
+                <button type="submit" class="btn-submit">Генерация жасау 🚀</button>
+            </form>
+        </div>
+    </div>
+
+    {% include 'base_nav.html' %}
+</body>
+</html>
