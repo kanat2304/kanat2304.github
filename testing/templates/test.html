@@ -16,27 +16,23 @@
             else { timeLeft--; setTimeout(updateTimer, 1000); }
         }
 
-        // --- 2. АНТИ-ШПАРГАЛКА ---
+        // --- 2. АНТИ-ШПАРГАЛКА (ҚАТАҢ РЕЖИМ 🚫) ---
+        let isSubmitted = false; // Екі рет жібермес үшін
+
         document.addEventListener("visibilitychange", function() {
-            if (document.hidden) {
-                document.getElementById('cheat-overlay').style.display = 'flex';
+            if (document.hidden && !isSubmitted) {
+                isSubmitted = true;
+                // 1. Хабарлама шығару
+                alert("⚠️ ТЫЙЫМ САЛЫНҒАН ӘРЕКЕТ!\n\nСіз тесттен шығуға тырыстыңыз. Сол себепті тест АВТОМАТТЫ ТҮРДЕ АЯҚТАЛДЫ!");
+                
+                // 2. Тестті мәжбүрлеп аяқтау
+                document.getElementById("examForm").submit();
             }
         });
-
-        function closeWarning() {
-            document.getElementById('cheat-overlay').style.display = 'none';
-        }
 
         window.onload = updateTimer;
     </script>
     <style>
-        /* Ескерту экраны */
-        #cheat-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(220, 53, 69, 0.95); color: white; display: none;
-            flex-direction: column; align-items: center; justify-content: center; z-index: 9999;
-            text-align: center;
-        }
         /* Радио батырмаларға арналған стиль (Mobile Style) */
         .option-label {
             display: block; 
@@ -58,12 +54,6 @@
     </style>
 </head>
 <body>
-    <div id="cheat-overlay">
-        <h1 style="font-size: 60px;">⚠️</h1>
-        <h1>НАЗАР АУДАРЫҢЫЗ!</h1>
-        <p>Тесттен шығуға тыйым салынған!</p>
-        <button onclick="closeWarning()" style="padding: 10px 20px; font-weight: bold; border-radius: 10px; border: none; cursor: pointer;">Түсіндім</button>
-    </div>
 
     <div class="page-container" style="max-width: 600px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
