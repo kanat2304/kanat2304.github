@@ -39,7 +39,6 @@ def extract_text(file):
 def dashboard(request):
     tests = Test.objects.filter(teacher=request.user)
     
-    # График деректері
     test_titles = []
     student_counts = []
     for test in tests:
@@ -48,7 +47,6 @@ def dashboard(request):
             test_titles.append(test.title)
             student_counts.append(count)
     
-    # РЕЙТИНГ
     leaderboard = StudentResult.objects.filter(test__teacher=request.user) \
         .values('student_name') \
         .annotate(total_score=Sum('score')) \
@@ -63,28 +61,70 @@ def dashboard(request):
     }
     return render(request, 'dashboard.html', context)
 
-# --- 2. CREATE (ТЕСТ ЖАСАУ) ---
+# --- 2. CREATE (ТЕСТ ЖАСАУ - ТОЛЫҚ ФУНКЦИОНАЛ) ---
 @login_required(login_url='user_login')
 def upload_file(request):
     if request.method == 'POST' and request.FILES.get('document'):
         try:
+            # Формадан деректерді алу
             title = request.POST.get('title')
-            q_count = request.POST.get('question_count', 5)
-            time = request.POST.get('time_limit', 20)
-            text = extract_text(request.FILES['document'])
+            # AI-ға қанша сұрақ жасатамыз (мысалы: 100)
+            total_generate = int(request.POST.get('total_generate', 20))
+            # Оқушыға қаншасын көрсетеміз (мысалы: 20)
+            questions_to_show = int(request.POST.get('questions_to_show', 10))
+            time = int(request.POST.get('time_limit', 20))
+            mode = request.POST.get('mode', 'lite') # lite немесе hard
             
-            if not text: return render(request, 'upload.html', {'error': "Файл бос!"})
+            # Файлдан мәтін алу
+            text = extract_text(request.FILES['document'])
+            if not text: return render(request, 'upload.html', {'error': "Файл бос немесе оқылмады!"})
 
+            # Gemini AI шақыру
             ai = get_configured_genai()
             model = ai.GenerativeModel('gemini-flash-latest')
-            prompt = f"Create {q_count} multiple choice questions. Return JSON: [{{'question':'Q','options':['A','B'],'correct':0}}]. Text: {text[:4000]}"
             
-            data = json.loads(model.generate_content(prompt).text.replace("```json","").replace("```","").strip())
-            new_test = Test.objects.create(teacher=request.user, title=title, time_limit=time)
+            # Промпт: Мәтіннен total_generate сұрақ жасау
+            prompt = f"""
+            Create {total_generate} multiple choice questions based on the text below. 
+            Format: JSON Array.
+            Example: [{{"question":"Q text", "options":["A", "B", "C", "D"], "correct":0}}]
+            (correct index: 0 for A, 1 for B, 2 for C, 3 for D).
+            Text: {text[:10000]}
+            """
+            
+            response = model.generate_content(prompt)
+            json_text = response.text.replace("```json", "").replace("```", "").strip()
+            data = json.loads(json_text)
+            
+            # Базаға сақтау
+            new_test = Test.objects.create(
+                teacher=request.user, 
+                title=title, 
+                time_limit=time,
+                questions_to_show=questions_to_show,
+                mode=mode
+            )
+            
+            # Сұрақтарды сақтау
             for q in data:
-                Question.objects.create(test=new_test, text=q['question'], option1=q['options'][0], option2=q['options'][1], option3=q['options'][2], option4=q['options'][3], correct_option=q['correct']+1)
+                # Кейде AI 4 варианттан аз беруі мүмкін, тексеріп аламыз
+                opts = q.get('options', [])
+                while len(opts) < 4: opts.append("-")
+                
+                Question.objects.create(
+                    test=new_test, 
+                    text=q['question'], 
+                    option1=opts[0], 
+                    option2=opts[1], 
+                    option3=opts[2], 
+                    option4=opts[3], 
+                    correct_option=q['correct'] + 1 # Бізде 1-ден басталады
+                )
+            
             return redirect('history')
-        except Exception as e: return render(request, 'upload.html', {'error': f"Қате: {e}"})
+        except Exception as e: 
+            return render(request, 'upload.html', {'error': f"Қате орын алды: {e}"})
+            
     return render(request, 'upload.html')
 
 # --- 3. HISTORY & TOOLS ---
@@ -133,40 +173,83 @@ def profile(request): return render(request, 'profile.html', {'user': request.us
 
 def register(request):
     if request.method == 'POST':
-        u, p, pc = request.POST.get('username'), request.POST.get('password'), request.POST.get('password_confirm')
-        if p!=pc: messages.error(request, "Парольдер сәйкес емес!"); return redirect('register')
-        if User.objects.filter(username=u).exists(): messages.error(request, "Логин бос емес!"); return redirect('register')
-        user = User.objects.create_user(u, p); login(request, user); return redirect('dashboard')
+        u = request.POST.get('username')
+        p = request.POST.get('password')
+        pc = request.POST.get('password_confirm')
+        if p != pc: 
+            messages.error(request, "Парольдер сәйкес емес!")
+            return redirect('register')
+        if User.objects.filter(username=u).exists(): 
+            messages.error(request, "Логин бос емес!")
+            return redirect('register')
+        user = User.objects.create_user(u, p)
+        login(request, user)
+        return redirect('dashboard')
     return render(request, 'register.html')
 
 def user_login(request):
     if request.method == 'POST':
         user = authenticate(request, username=request.POST.get('username'), password=request.POST.get('password'))
-        if user: login(request, user); return redirect('dashboard')
-        else: messages.error(request, "Қате логин/пароль!")
+        if user: 
+            login(request, user)
+            return redirect('dashboard')
+        else: 
+            messages.error(request, "Қате логин/пароль!")
     return render(request, 'login.html')
 
 def user_logout(request): logout(request); return redirect('user_login')
 
-# --- 5. TEST TAKING (SMART SHUFFLE) ---
+# --- 5. TAKE TEST (SMART SHUFFLE & LOGIC) ---
 def take_test(request, test_id):
     test = get_object_or_404(Test, id=test_id)
     
     if request.method == 'POST':
         student_name = request.POST.get('student_name')
         score = 0
-        questions = test.questions.all()
-        for question in questions:
-            # HTML-де сұрақ ID-мен келеді (question_5), реті маңызды емес
-            selected = request.POST.get(f'question_{question.id}')
-            if selected and int(selected) == question.correct_option:
-                score += 1
         
-        StudentResult.objects.create(test=test, student_name=student_name, score=score, total_questions=questions.count())
-        return render(request, 'result.html', {'score': score, 'total': questions.count(), 'student': student_name, 'test': test})
+        # Барлық сұрақтарды тексереміз (себебі қай 20 сұрақ келгенін нақты білмейміз,
+        # бірақ формада тек келген сұрақтардың жауабы болады)
+        all_questions = test.questions.all()
+        
+        for question in all_questions:
+            # Формадан жауап іздейміз
+            selected = request.POST.get(f'question_{question.id}')
+            if selected:
+                # Егер жауап берілсе және ол дұрыс болса
+                if int(selected) == question.correct_option:
+                    score += 1
+        
+        # Нәтижені сақтаймыз
+        # total_questions ретінде мұғалім белгілеген шектеуді жазамыз (мысалы, 20)
+        StudentResult.objects.create(
+            test=test, 
+            student_name=student_name, 
+            score=score, 
+            total_questions=test.questions_to_show
+        )
+        
+        return render(request, 'result.html', {
+            'score': score, 
+            'total': test.questions_to_show, 
+            'student': student_name, 
+            'test': test
+        })
     
-    # GET СҰРАНЫС: АРАЛАСТЫРУ (SHUFFLE)
+    # --- GET СҰРАНЫС (Вариант генерациялау) ---
     questions_list = list(test.questions.all())
-    random.shuffle(questions_list) # 🔥 Сұрақтарды араластырамыз
     
-    return render(request, 'test.html', {'test': test, 'questions': questions_list})
+    # Сұрақтарды араластырамыз
+    random.shuffle(questions_list)
+    
+    # Мұғалім көрсеткен санға дейін қысқартамыз (мысалы, 100-ден 20-сын аламыз)
+    # Егер базада сұрақ аз болса, барынша алады
+    limit = test.questions_to_show
+    if limit > len(questions_list):
+        limit = len(questions_list)
+        
+    selected_questions = questions_list[:limit]
+    
+    return render(request, 'test.html', {
+        'test': test, 
+        'questions': selected_questions
+    })

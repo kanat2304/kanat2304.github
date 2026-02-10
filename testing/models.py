@@ -2,11 +2,22 @@ from django.db import models
 from django.contrib.auth.models import User
 
 class Test(models.Model):
+    MODE_CHOICES = [
+        ('lite', 'Лайт (Ескерту ғана)'),
+        ('hard', 'Қатаң (Тесттен шықса бітеді)'),
+    ]
+
     teacher = models.ForeignKey(User, on_delete=models.CASCADE)
     title = models.CharField(max_length=200)
     description = models.TextField(blank=True)
-    # Жаңа өріс: Уақыт шектеуі (минутпен), егер белгілемесе 20 минут тұрады
+    
+    # Настройки теста
     time_limit = models.IntegerField(default=20, verbose_name="Уақыт (минут)")
+    # Сколько вопросов показывать ученику (из общего пула)
+    questions_to_show = models.IntegerField(default=10, verbose_name="Көрсетілетін сұрақ саны")
+    # Режим сложности
+    mode = models.CharField(max_length=10, choices=MODE_CHOICES, default='lite', verbose_name="Режим")
+    
     date_created = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

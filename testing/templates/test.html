@@ -5,61 +5,79 @@
     <title>{{ test.title }}</title>
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
     <script>
+        // --- PYTHON-НАН КЕЛГЕН БАПТАУЛАР ---
+        const TEST_MODE = "{{ test.mode }}"; // 'lite' немесе 'hard'
+        let timeLeft = {{ test.time_limit }} * 60; // Секундқа айналдыру
+
         // --- 1. ТАЙМЕР ---
-        let timeLeft = {{ test.time_limit }} * 60;
         function updateTimer() {
             let m = Math.floor(timeLeft / 60);
             let s = timeLeft % 60;
             if(s<10) s="0"+s; if(m<10) m="0"+m;
-            document.getElementById("timer").innerText = m+":"+s;
-            if(timeLeft <= 0) document.getElementById("examForm").submit();
-            else { timeLeft--; setTimeout(updateTimer, 1000); }
+            
+            document.getElementById("timer").innerText = m + ":" + s;
+            
+            if(timeLeft <= 0) {
+                submitTest("Уақыт аяқталды!");
+            } else { 
+                timeLeft--; 
+                setTimeout(updateTimer, 1000); 
+            }
         }
 
-        // --- 2. АНТИ-ШПАРГАЛКА (ҚАТАҢ РЕЖИМ 🚫) ---
-        let isSubmitted = false; // Екі рет жібермес үшін
+        // --- 2. АНТИ-ШПАРГАЛКА (SMART РЕЖИМ) ---
+        let isSubmitted = false;
 
         document.addEventListener("visibilitychange", function() {
             if (document.hidden && !isSubmitted) {
-                isSubmitted = true;
-                // 1. Хабарлама шығару
-                alert("⚠️ ТЫЙЫМ САЛЫНҒАН ӘРЕКЕТ!\n\nСіз тесттен шығуға тырыстыңыз. Сол себепті тест АВТОМАТТЫ ТҮРДЕ АЯҚТАЛДЫ!");
-                
-                // 2. Тестті мәжбүрлеп аяқтау
-                document.getElementById("examForm").submit();
+                if (TEST_MODE === 'hard') {
+                    // ҚАТАҢ РЕЖИМ: Бірден бітіреміз
+                    submitTest("🔴 ҚАТАҢ РЕЖИМ!\n\nСіз тесттен шығуға тырыстыңыз. Тест автоматты түрде аяқталды.");
+                } else {
+                    // ЛАЙТ РЕЖИМ: Тек қорқытамыз
+                    alert("⚠️ ЕСКЕРТУ!\n\nТесттен шығуға болмайды! Бұл әрекет мұғалімге көрінеді.");
+                }
             }
         });
+
+        function submitTest(reason) {
+            if (!isSubmitted) {
+                isSubmitted = true;
+                if(reason) alert(reason);
+                document.getElementById("examForm").submit();
+            }
+        }
 
         window.onload = updateTimer;
     </script>
     <style>
-        /* Радио батырмаларға арналған стиль (Mobile Style) */
         .option-label {
-            display: block; 
-            padding: 12px; 
-            background: rgba(255,255,255,0.05); 
-            margin: 8px 0; 
-            border-radius: 10px; 
-            cursor: pointer; 
-            border: 1px solid rgba(255,255,255,0.1);
-            transition: 0.2s;
+            display: block; padding: 12px; background: rgba(255,255,255,0.05); 
+            margin: 8px 0; border-radius: 10px; cursor: pointer; 
+            border: 1px solid rgba(255,255,255,0.1); transition: 0.2s;
         }
-        .option-label:hover {
-            background: rgba(255,255,255,0.15);
-            border-color: #00d2ff;
-        }
-        input[type="radio"] {
-            margin-right: 10px;
-        }
+        .option-label:hover { background: rgba(255,255,255,0.15); border-color: #00d2ff; }
+        input[type="radio"] { margin-right: 10px; }
     </style>
 </head>
 <body>
 
-    <div class="page-container" style="max-width: 600px;">
+    <div class="page-container" style="max-width: 700px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-            <h2 style="margin: 0;">📝 {{ test.title }}</h2>
-            <div style="background: linear-gradient(45deg, #ff416c, #ff4b2b); color: white; padding: 8px 15px; border-radius: 20px; font-weight: bold; box-shadow: 0 4px 10px rgba(255, 65, 108, 0.3);">
-                ⏱️ <span id="timer">00:00</span>
+            <div>
+                <h2 style="margin: 0;">📝 {{ test.title }}</h2>
+                <div style="font-size: 12px; color: #aaa; margin-top: 5px;">
+                    Режим: 
+                    {% if test.mode == 'hard' %}
+                        <span style="color: #ff4757; font-weight: bold;">🔴 Қатаң</span>
+                    {% else %}
+                        <span style="color: #38ef7d; font-weight: bold;">🟢 Лайт</span>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div style="background: linear-gradient(45deg, #ff416c, #ff4b2b); color: white; padding: 10px 20px; border-radius: 20px; font-weight: bold; box-shadow: 0 4px 10px rgba(255, 65, 108, 0.3);">
+                ⏱️ <span id="timer">--:--</span>
             </div>
         </div>
         
@@ -70,9 +88,9 @@
                    style="margin-bottom: 20px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 15px; border-radius: 10px; width: 100%;">
 
             {% for question in questions %}
-            <div class="card" style="text-align: left; padding: 20px;">
+            <div class="card" style="text-align: left; padding: 25px;">
                 <h4 style="margin-top: 0; color: #00d2ff;">Сұрақ {{ forloop.counter }}</h4>
-                <p style="font-size: 16px; margin-bottom: 15px;">{{ question.text }}</p>
+                <p style="font-size: 16px; line-height: 1.5;">{{ question.text }}</p>
                 
                 <label class="option-label">
                     <input type="radio" name="question_{{ question.id }}" value="1"> {{ question.option1 }}
@@ -89,7 +107,7 @@
             </div>
             {% endfor %}
 
-            <button type="submit" class="btn-submit">Аяқтау және Жіберу ✅</button>
+            <button type="submit" class="btn-submit">Аяқтау ✅</button>
         </form>
     </div>
 </body>

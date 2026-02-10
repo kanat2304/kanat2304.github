@@ -7,7 +7,7 @@
 </head>
 <body>
     <div class="page-container">
-        <h2 style="text-align: center;">🤖 AI Тест генератор</h2>
+        <h2 style="text-align: center;">🤖 Smart Тест Құрастырушы</h2>
         
         <div class="card">
             {% if error %}
@@ -16,24 +16,41 @@
 
             <form method="post" enctype="multipart/form-data">
                 {% csrf_token %}
-                <label>Тақырып:</label>
-                <input type="text" name="title" placeholder="Мысалы: Қазақстан тарихы" required>
                 
-                <div style="display: flex; gap: 10px;">
-                    <div style="width: 50%;">
-                        <label>Сұрақ саны:</label>
-                        <input type="number" name="question_count" value="5" min="1" max="20">
+                <label>Тақырып:</label>
+                <input type="text" name="title" placeholder="Мысалы: Python негіздері" required>
+                
+                <div style="display: flex; gap: 15px; margin-top: 15px;">
+                    <div style="flex: 1;">
+                        <label>AI қанша сұрақ жасасын?</label>
+                        <input type="number" name="total_generate" value="50" min="5" max="100" title="Жалпы базаға жүктелетін сұрақ саны">
+                        <small style="color: #aaa; font-size: 10px;">Мысалы: 50 сұрақ генерациялау</small>
                     </div>
-                    <div style="width: 50%;">
-                        <label>Уақыт (мин):</label>
-                        <input type="number" name="time_limit" value="20" min="5" max="180">
+                    <div style="flex: 1;">
+                        <label>Оқушыға қанша сұрақ береміз?</label>
+                        <input type="number" name="questions_to_show" value="15" min="1" max="50" title="Әр оқушыға кездейсоқ түседі">
+                        <small style="color: #aaa; font-size: 10px;">Соның ішінен 15-і ғана келеді</small>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 15px; margin-top: 15px;">
+                    <div style="flex: 1;">
+                        <label>Уақыт (минут):</label>
+                        <input type="number" name="time_limit" value="20" min="1">
+                    </div>
+                    <div style="flex: 1;">
+                        <label>Қауіпсіздік режимі:</label>
+                        <select name="mode" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 10px; color: white; outline: none;">
+                            <option value="lite">🟢 Лайт (Тек ескерту жасайды)</option>
+                            <option value="hard">🔴 Қатаң (Шықса, тест бітеді)</option>
+                        </select>
                     </div>
                 </div>
                 
-                <label style="margin-top: 15px; display: block;">Файл жүктеу (Word/PDF):</label>
-                <input type="file" name="document" accept=".pdf, .docx" required style="padding: 10px; background: rgba(255,255,255,0.05);">
+                <label style="margin-top: 20px; display: block;">Материал жүктеу (Word/PDF):</label>
+                <input type="file" name="document" accept=".pdf, .docx" required style="padding: 10px; background: rgba(255,255,255,0.05); border-radius: 10px; width: 100%;">
 
-                <button type="submit" class="btn-submit">Генерация жасау 🚀</button>
+                <button type="submit" class="btn-submit">Генерация бастау 🚀</button>
             </form>
         </div>
     </div>
