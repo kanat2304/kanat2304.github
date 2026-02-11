@@ -7,7 +7,7 @@
 </head>
 <body>
     <div class="page-container">
-        <h2 style="text-align: center;">🤖 Smart Тест Құрастырушы</h2>
+        <h2 style="text-align: center;">📂 Дайын тестті жүктеу</h2>
         
         <div class="card">
             {% if error %}
@@ -18,18 +18,16 @@
                 {% csrf_token %}
                 
                 <label>Тақырып:</label>
-                <input type="text" name="title" placeholder="Мысалы: Python негіздері" required>
+                <input type="text" name="title" placeholder="Мысалы: Химия 100 сұрақ" required>
                 
                 <div style="display: flex; gap: 15px; margin-top: 15px;">
                     <div style="flex: 1;">
-                        <label>AI қанша сұрақ жасасын?</label>
-                        <input type="number" name="total_generate" value="50" min="5" max="100" title="Жалпы базаға жүктелетін сұрақ саны">
-                        <small style="color: #aaa; font-size: 10px;">Мысалы: 50 сұрақ генерациялау</small>
+                        <label style="color: #00d2ff;">Лимит (Оқушы саны):</label>
+                        <input type="number" name="max_students" value="50" min="1" title="Тестке қанша оқушы кіре алады?">
                     </div>
                     <div style="flex: 1;">
-                        <label>Оқушыға қанша сұрақ береміз?</label>
-                        <input type="number" name="questions_to_show" value="15" min="1" max="50" title="Әр оқушыға кездейсоқ түседі">
-                        <small style="color: #aaa; font-size: 10px;">Соның ішінен 15-і ғана келеді</small>
+                        <label style="color: #38ef7d;">Әр оқушыға (Сұрақ саны):</label>
+                        <input type="number" name="questions_to_show" value="20" min="1" title="Файлдағы 100 сұрақтың ішінен әр оқушыға нешеуі келеді?">
                     </div>
                 </div>
 
@@ -39,22 +37,27 @@
                         <input type="number" name="time_limit" value="20" min="1">
                     </div>
                     <div style="flex: 1;">
-                        <label>Қауіпсіздік режимі:</label>
-                        <select name="mode" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 10px; color: white; outline: none;">
-                            <option value="lite">🟢 Лайт (Тек ескерту жасайды)</option>
-                            <option value="hard">🔴 Қатаң (Шықса, тест бітеді)</option>
+                        <label>Режим:</label>
+                        <select name="mode" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 10px; color: white;">
+                            <option value="lite">🟢 Лайт (Ескерту жасайды)</option>
+                            <option value="hard">🔴 Қатаң (Шықса бітеді)</option>
                         </select>
                     </div>
                 </div>
                 
-                <label style="margin-top: 20px; display: block;">Материал жүктеу (Word/PDF):</label>
-                <input type="file" name="document" accept=".pdf, .docx" required style="padding: 10px; background: rgba(255,255,255,0.05); border-radius: 10px; width: 100%;">
+                <div style="margin-top: 20px; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 10px;">
+                    <label style="display: block; margin-bottom: 10px;">📄 Сұрақтар бар файлды жүктеу (Word/PDF):</label>
+                    <input type="file" name="document" accept=".pdf, .docx" required style="width: 100%;">
+                    <p style="font-size: 12px; color: #aaa; margin-top: 5px;">
+                        * Файлда сұрақтар мен жауаптар анық жазылуы керек.<br>
+                        * Дұрыс жауап белгіленген болса (bold, *), AI соны алады. Белгіленбесе, өзі табуға тырысады.
+                    </p>
+                </div>
 
-                <button type="submit" class="btn-submit">Генерация бастау 🚀</button>
+                <button type="submit" class="btn-submit">Тестті базаға енгізу 📥</button>
             </form>
         </div>
     </div>
-
     {% include 'base_nav.html' %}
 </body>
 </html>

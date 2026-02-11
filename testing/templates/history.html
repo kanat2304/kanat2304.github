@@ -7,10 +7,10 @@
     <script>
         function copyLink(id) {
             var link = window.location.origin + "/test/" + id + "/";
-            navigator.clipboard.writeText(link).then(() => alert("Ссылка скопирована!"));
+            navigator.clipboard.writeText(link).then(() => alert("Сілтеме көшірілді!"));
         }
         function confirmDelete(url) {
-            if(confirm("Вы уверены, что хотите удалить этот тест? Все результаты учеников тоже исчезнут!")) {
+            if(confirm("Сіз бұл тестті өшіргіңіз келе ме? Барлық нәтижелер жойылады!")) {
                 window.location.href = url;
             }
         }
@@ -18,10 +18,10 @@
 </head>
 <body>
     <div class="page-container">
-        <h2 style="text-align: center;">📜 Управление</h2>
+        <h2 style="text-align: center;">📜 Басқару панелі</h2>
 
         <div class="card">
-            <h3 style="color: #00d2ff; margin-bottom: 15px;">🔗 Мои тесты</h3>
+            <h3 style="color: #00d2ff; margin-bottom: 15px;">🔗 Менің тесттерім</h3>
             <div class="table-scroll">
                 <table>
                     {% for test in my_tests %}
@@ -40,28 +40,33 @@
                         </td>
                     </tr>
                     {% empty %}
-                    <tr><td>Тестов пока нет...</td></tr>
+                    <tr><td>Тесттер әзірге жоқ...</td></tr>
                     {% endfor %}
                 </table>
             </div>
         </div>
 
         <div class="card">
-            <h3 style="color: #38ef7d; margin-bottom: 15px;">🎓 Результаты</h3>
+            <h3 style="color: #38ef7d; margin-bottom: 15px;">🎓 Оқушы нәтижелері</h3>
             <div class="table-scroll">
                 <table>
-                    <tr><th>Ученик</th><th>Балл</th></tr>
+                    <tr><th>Оқушы</th><th>Балл</th></tr>
                     {% for result in results %}
                     <tr>
-                        <td>{{ result.student_name }}<br><small style="color: #aaa;">{{ result.test.title }}</small></td>
                         <td>
-                            <b style="color: {% if result.score > result.total_questions|add:'-2' %}#38ef7d{% else %}#ff4757{% endif %};">
+                            <a href="{% url 'test_result' result.id %}" style="color: white; text-decoration: underline; font-weight: bold; cursor: pointer;">
+                                {{ result.student_name }}
+                            </a>
+                            <br><small style="color: #aaa;">{{ result.test.title }}</small>
+                        </td>
+                        <td>
+                            <b style="color: {% if result.score > result.total_questions|add:'-3' %}#38ef7d{% else %}#ff4757{% endif %};">
                                 {{ result.score }}/{{ result.total_questions }}
                             </b>
                         </td>
                     </tr>
                     {% empty %}
-                    <tr><td>Результатов нет...</td></tr>
+                    <tr><td>Нәтижелер жоқ...</td></tr>
                     {% endfor %}
                 </table>
             </div>

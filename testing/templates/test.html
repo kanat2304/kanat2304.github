@@ -7,39 +7,48 @@
     <script>
         // --- PYTHON-НАН КЕЛГЕН БАПТАУЛАР ---
         const TEST_MODE = "{{ test.mode }}"; // 'lite' немесе 'hard'
-        let timeLeft = {{ test.time_limit }} * 60; // Секундқа айналдыру
+        let timeLeft = {{ test.time_limit }} * 60; // Секунд
+        let isSubmitted = false;
+        let warningCount = 0;
 
         // --- 1. ТАЙМЕР ---
         function updateTimer() {
+            if (timeLeft <= 0) {
+                submitTest("Уақыт аяқталды!");
+                return;
+            }
+            
             let m = Math.floor(timeLeft / 60);
             let s = timeLeft % 60;
             if(s<10) s="0"+s; if(m<10) m="0"+m;
             
             document.getElementById("timer").innerText = m + ":" + s;
-            
-            if(timeLeft <= 0) {
-                submitTest("Уақыт аяқталды!");
-            } else { 
-                timeLeft--; 
-                setTimeout(updateTimer, 1000); 
+            timeLeft--; 
+            setTimeout(updateTimer, 1000); 
+        }
+
+        // --- 2. АНТИ-ШПАРГАЛКА ФУНКЦИЯСЫ ---
+        function handleCheat() {
+            if (isSubmitted) return;
+
+            if (TEST_MODE === 'hard') {
+                // ҚАТАҢ РЕЖИМ: Бірден бітіреміз
+                submitTest("🔴 ҚАТАҢ РЕЖИМ!\n\nСіз экраннан шығып кеттіңіз. Тест автоматты түрде аяқталды.");
+            } else {
+                // ЛАЙТ РЕЖИМ: Ескерту көрсетеміз
+                warningCount++;
+                document.getElementById('warning-count').innerText = warningCount;
+                document.getElementById('cheat-overlay').style.display = 'flex';
             }
         }
 
-        // --- 2. АНТИ-ШПАРГАЛКА (SMART РЕЖИМ) ---
-        let isSubmitted = false;
-
+        // --- 3. ОҚИҒАЛАРДЫ ТЫҢДАУ ---
         document.addEventListener("visibilitychange", function() {
-            if (document.hidden && !isSubmitted) {
-                if (TEST_MODE === 'hard') {
-                    // ҚАТАҢ РЕЖИМ: Бірден бітіреміз
-                    submitTest("🔴 ҚАТАҢ РЕЖИМ!\n\nСіз тесттен шығуға тырыстыңыз. Тест автоматты түрде аяқталды.");
-                } else {
-                    // ЛАЙТ РЕЖИМ: Тек қорқытамыз
-                    alert("⚠️ ЕСКЕРТУ!\n\nТесттен шығуға болмайды! Бұл әрекет мұғалімге көрінеді.");
-                }
-            }
+            if (document.hidden) handleCheat();
         });
+        window.onblur = function() { handleCheat(); };
 
+        // --- 4. ТЕСТТІ АЯҚТАУ ---
         function submitTest(reason) {
             if (!isSubmitted) {
                 isSubmitted = true;
@@ -48,9 +57,25 @@
             }
         }
 
+        function closeWarning() {
+            document.getElementById('cheat-overlay').style.display = 'none';
+        }
+
+        function setSubmitting() {
+            isSubmitted = true;
+        }
+
         window.onload = updateTimer;
     </script>
+
     <style>
+        #cheat-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(220, 53, 69, 0.95); 
+            color: white; display: none;
+            flex-direction: column; align-items: center; justify-content: center; 
+            z-index: 9999; text-align: center;
+        }
         .option-label {
             display: block; padding: 12px; background: rgba(255,255,255,0.05); 
             margin: 8px 0; border-radius: 10px; cursor: pointer; 
@@ -62,6 +87,18 @@
 </head>
 <body>
 
+    <div id="cheat-overlay">
+        <div style="font-size: 80px;">👀</div>
+        <h1>НАЗАР АУДАРЫҢЫЗ!</h1>
+        <p style="font-size: 20px;">Тесттен шығуға болмайды!</p>
+        <p style="background: rgba(0,0,0,0.3); padding: 10px 20px; border-radius: 10px;">
+            Ескерту саны: <span id="warning-count" style="font-weight: bold; color: yellow;">0</span>
+        </p>
+        <button onclick="closeWarning()" style="padding: 15px 30px; font-size: 18px; font-weight: bold; border-radius: 10px; border: none; cursor: pointer; margin-top: 20px; background: white; color: #dc3545;">
+            Түсіндім, жалғастырамын
+        </button>
+    </div>
+
     <div class="page-container" style="max-width: 700px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
             <div>
@@ -69,9 +106,9 @@
                 <div style="font-size: 12px; color: #aaa; margin-top: 5px;">
                     Режим: 
                     {% if test.mode == 'hard' %}
-                        <span style="color: #ff4757; font-weight: bold;">🔴 Қатаң</span>
+                        <span style="color: #ff4757; font-weight: bold;">🔴 ҚАТАҢ</span>
                     {% else %}
-                        <span style="color: #38ef7d; font-weight: bold;">🟢 Лайт</span>
+                        <span style="color: #38ef7d; font-weight: bold;">🟢 ЛАЙТ</span>
                     {% endif %}
                 </div>
             </div>
@@ -81,13 +118,15 @@
             </div>
         </div>
         
-        <form method="post" id="examForm">
+        <form method="post" id="examForm" onsubmit="setSubmitting()">
             {% csrf_token %}
             
             <input type="text" name="student_name" required placeholder="Аты-жөніңізді жазыңыз..." 
                    style="margin-bottom: 20px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 15px; border-radius: 10px; width: 100%;">
 
             {% for question in questions %}
+            <input type="hidden" name="q_ids" value="{{ question.id }}">
+
             <div class="card" style="text-align: left; padding: 25px;">
                 <h4 style="margin-top: 0; color: #00d2ff;">Сұрақ {{ forloop.counter }}</h4>
                 <p style="font-size: 16px; line-height: 1.5;">{{ question.text }}</p>
